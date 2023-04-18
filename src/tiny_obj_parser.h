@@ -9,7 +9,7 @@
 #include "faces_array.h"
 #include "vertex_array.h"
 
-void parse_obj(const char *obj_filepath, VertexArray *VertexArray,
-               FacesArray *FacesArray);
+void parse_obj(const char *obj_filepath, dynVertexArray *vertex_array,
+               FacesArray *faces_array, dynVertexArray *texture_coords);
 
 #endif
