@@ -34,7 +34,7 @@ void replace_at(Zbuffer *zbuf, int x, int y, double val) {
 }
 
 // Dray a 2d scene on a 1d screen
-void rasterize(Vec2i p0, Vec2i p1, TGAImage *render, TGAColor color,
+void rasterize(Vec3f p0, Vec3f p1, TGAImage *render, TGAColor color,
                int buffer[]) {
   // Make it left to right
   if (p0.x > p1.x) {
@@ -43,7 +43,7 @@ void rasterize(Vec2i p0, Vec2i p1, TGAImage *render, TGAColor color,
 
   int dx = p1.x - p0.x;
   for (int x = p0.x; x <= p1.x; x++) {
-    float t = (x - p0.x) / (float)dx;
+    double t = (x - p0.x) / (double)dx;
     int y = rint(p0.y * (1.f - t) + p1.y * t);
     if (buffer[x] < y) {
       buffer[x] = y;
@@ -79,7 +79,7 @@ void render_line(int x0, int x1, int y0, int y1, TGAColor color,
 
   int dx = x1 - x0;
   for (int x = x0; x <= x1; x++) {
-    float t = (x - x0) / (float)dx;
+    double t = (x - x0) / (double)dx;
     int y = rint(y0 * (1.f - t) + y1 * t); // rint = fast round
     if (steep) {
       img->set(y, x, color); // If transposed, de-transpose
@@ -89,12 +89,46 @@ void render_line(int x0, int x1, int y0, int y1, TGAColor color,
   }
 }
 
+void render_line(Vec3f p0, Vec3f p1, TGAColor color, TGAImage *img) {
+  bool steep = false;
+  // If the line is steep, transpose the image
+  if (abs_fast(p0.x - p1.x) < abs_fast(p0.y - p1.y)) {
+    swap(&p0.x, &p0.y);
+    swap(&p1.x, &p1.y);
+    steep = true;
+  }
+
+  // Make it left to right
+  if (p0.x > p1.x) {
+    swap(&p0, &p1);
+  }
+
+  // Check boundaries
+  if (p0.x < 0 || p1.x > img->get_width() || p0.y < 0 ||
+      p1.y > img->get_width()) {
+    // TODO: Log this
+    // fprintf(stderr, "Render error: Line out of boundaries. Skipping..\n");
+    return;
+  }
+
+  int dx = p1.x - p0.x;
+  for (int x = p0.x; x <= p1.x; x++) {
+    double t = (x - p0.x) / (double)dx;
+    int y = rint(p0.y * (1.f - t) + p1.y * t); // rint = fast round
+    if (steep) {
+      img->set(y, x, color); // If transposed, de-transpose
+    } else {
+      img->set(x, y, color);
+    }
+  }
+};
+
 void render_triangle(Vertex pts[], TGAImage *image, TGAColor color) {
 
-  Vec2f bboxmin = {(double)image->get_width() - 1,
+  Vec3f bboxmin = {(double)image->get_width() - 1,
                    (double)image->get_height() - 1};
-  Vec2f bboxmax = {0.0, 0.0};
-  Vec2f clamp = {(double)image->get_width() - 1,
+  Vec3f bboxmax = {0.0, 0.0};
+  Vec3f clamp = {(double)image->get_width() - 1,
                  (double)image->get_height() - 1};
   for (int i = 0; i < 3; i++) {
     bboxmin.x = MAX(0, MIN(bboxmin.x, pts[i].x));
@@ -116,10 +150,10 @@ void render_triangle(Vertex pts[], TGAImage *image, TGAColor color) {
 
 void render_triangle(Vertex pts[], Zbuffer zbuffer, TGAImage *image,
                      TGAColor color) {
-  Vec2f bboxmin = {(double)image->get_width() - 1,
+  Vec3f bboxmin = {(double)image->get_width() - 1,
                    (double)image->get_height() - 1};
-  Vec2f bboxmax = {0.0, 0.0};
-  Vec2f clamp = {(double)image->get_width() - 1,
+  Vec3f bboxmax = {0.0, 0.0};
+  Vec3f clamp = {(double)image->get_width() - 1,
                  (double)image->get_height() - 1};
   for (int i = 0; i < 3; i++) {
     bboxmin.x = MAX(0, MIN(bboxmin.x, pts[i].x));
@@ -150,10 +184,10 @@ void render_triangle(Vertex pts[], Zbuffer zbuffer, TGAImage *image,
 
 void render_triangle(Vertex pts[], Vertex txt_verts[], Zbuffer *zbuffer,
                      TGAImage *image, TGAImage *texture, double intensity) {
-  Vec2f bboxmin = {(double)image->get_width() - 1,
+  Vec3f bboxmin = {(double)image->get_width() - 1,
                    (double)image->get_height() - 1};
-  Vec2f bboxmax = {0.0, 0.0};
-  Vec2f clamp = {(double)image->get_width() - 1,
+  Vec3f bboxmax = {0.0, 0.0};
+  Vec3f clamp = {(double)image->get_width() - 1,
                  (double)image->get_height() - 1};
   for (int i = 0; i < 3; i++) {
     bboxmin.x = MAX(0, MIN(bboxmin.x, pts[i].x));

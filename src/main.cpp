@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "faces_array.h"
+#include "geometry.h"
 #include "render.h"
 #include "tgaimage.h"
 #include "tiny_obj_parser.h"
@@ -45,44 +46,59 @@ int main(int argc, char **argv) {
   Zbuffer zbuf;
   init_zbuffer(&zbuf, WIDTH, HEIGHT);
 
-  for (size_t i = 0; i < faces_array.size; i++) {
-    Face f = faces_array.data[i];
+  Matrix44f viewport = {
+      0.707107, 0,        -0.707107, 0, -0.331295, 0.883452, -0.331295, 0,
+      0.624695, 0.468521, 0.624695,  0, 4.000574,  3.00043,  4.000574,  1};
+  //to_identity(&viewport);
+  invert_it(&viewport);
+  print_matrix(&viewport);
 
-    // World coords
-    Vertex v1 = vertex_array.data[f.v1];
-    Vertex v2 = vertex_array.data[f.v2];
-    Vertex v3 = vertex_array.data[f.v3];
+  Vec3f p1 = {0.5, -0.5};
+  Vec3f p1T;
+  Vec3f p2 = {0.3, -0.8};
+  Vec3f p2T;
+  Vec3f p3 = {-0.2, 0.6};
+  Vec3f p3T;
+  render_line(p1T, p2T, green, &image);
+  render_line(p2T, p3T, red, &image);
+  render_line(p3T, p1T, blue, &image);
 
-    Vertex vt1 = texture_coords.data[f.vt1];
-    Vertex vt2 = texture_coords.data[f.vt2];
-    Vertex vt3 = texture_coords.data[f.vt3];
-    texture_vertices[0] = vt1;
-    texture_vertices[1] = vt2;
-    texture_vertices[2] = vt3;
+  // for (size_t i = 0; i < faces_array.size; i++) {
+  //   Face f = faces_array.data[i];
 
-    // ilumination intensity
-    Vec3f ab = {v2.x - v1.x, v2.y - v1.y, v2.z - v1.z};
-    Vec3f ac = {v3.x - v1.x, v3.y - v1.y, v3.z - v1.z};
-    Vec3f normal = cross_product(ac, ab);
-    normalize(&normal);
-    double intensity = scalar_product(normal, light_dir);
+  //  // World coords
+  //  Vertex v1 = vertex_array.data[f.v1];
+  //  Vertex v2 = vertex_array.data[f.v2];
+  //  Vertex v3 = vertex_array.data[f.v3];
 
-    // Calculate screen coordinates
-    float half_width = (WIDTH - PADDING) / 2.;
-    float half_height = (HEIGHT - PADDING) / 2.;
-    screen_coords[0] = {(v1.x + 1.) * half_width,
-                        (v1.y + 1.) * half_height + PADDING / 2.f};
-    screen_coords[1] = {(v2.x + 1.) * half_width,
-                        (v2.y + 1.) * half_height + PADDING / 2.f};
-    screen_coords[2] = {(v3.x + 1.) * half_width,
-                        (v3.y + 1.) * half_height + PADDING / 2.f};
+  //  texture_vertices[0] = texture_coords.data[f.vt1];
+  //  texture_vertices[1] = texture_coords.data[f.vt2];
+  //  texture_vertices[2] = texture_coords.data[f.vt3];
 
-    // Don't draw what's not iluminated
-    if (intensity > 0) {
-      render_triangle(screen_coords, texture_vertices, &zbuf, &image,
-                           &texture, intensity);
-    }
-  }
+  //  // ilumination intensity
+  //  Vec3f ab = {v2.x - v1.x, v2.y - v1.y, v2.z - v1.z};
+  //  Vec3f ac = {v3.x - v1.x, v3.y - v1.y, v3.z - v1.z};
+  //  Vec3f normal = cross_product(ac, ab);
+  //  normalize(&normal);
+  //  double intensity = dot_product(normal, light_dir);
+
+  //  // Calculate screen coordinates
+  //  double half_width = (WIDTH - PADDING) / 2.;
+  //  double half_height = (HEIGHT - PADDING) / 2.;
+  //  screen_coords[0] = {(v1.x + 1.) * half_width,
+  //                      (v1.y + 1.) * half_height + PADDING / 2.f};
+  //  screen_coords[1] = {(v2.x + 1.) * half_width,
+  //                      (v2.y + 1.) * half_height + PADDING / 2.f};
+  //  screen_coords[2] = {(v3.x + 1.) * half_width,
+  //                      (v3.y + 1.) * half_height + PADDING / 2.f};
+
+  //  // Don't draw what's not iluminated
+  //  if (intensity > 0) {
+  //    render_triangle(screen_coords, texture_vertices, &zbuf, &image,
+  //    &texture,
+  //                    intensity);
+  //  }
+  //}
 
   image.flip_vertically(); // i want to have the origin at the left bottom
                            // corner of the image

@@ -13,12 +13,13 @@ typedef struct Zbuffer {
 } Zbuffer;
 
 void render_line(int x0, int x1, int y0, int y1, TGAColor color, TGAImage *img);
+void render_line(Vec3f p0, Vec3f p1, TGAColor color, TGAImage *img);
 void render_triangle(Vertex pts[], TGAImage *image, TGAColor color);
 void render_triangle(Vertex pts[], Zbuffer zbuffer, TGAImage *image,
                      TGAColor color);
 void render_triangle(Vertex pts[], Vertex txt_verts[], Zbuffer *zbuffer,
-                          TGAImage *image, TGAImage *texture, double intensity);
-void rasterize(Vec2i p0, Vec2i p1, TGAImage *render, TGAColor, int buffer[]);
+                     TGAImage *image, TGAImage *texture, double intensity);
+void rasterize(Vec3f p0, Vec3f p1, TGAImage *render, TGAColor, int buffer[]);
 
 // Zbuffer methods
 void init_zbuffer(Zbuffer *zbuf, size_t width, size_t height);
